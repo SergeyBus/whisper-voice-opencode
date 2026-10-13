@@ -11,7 +11,25 @@ let sttApiModel = null;
 let sttApiKeyEnv = null;
 let sttLanguage = "auto";
 
-const WAV_FILE = "/tmp/opencode-stt.wav";
+export function audioDriver(platform) {
+  if (platform === "win32") return "waveaudio";
+  if (platform === "darwin") return "coreaudio";
+  return "alsa";
+}
+
+export function soxInputArgs(mic, platform) {
+  return mic ? ["-t", audioDriver(platform), mic] : ["-d"];
+}
+
+export function shouldUsePkill(platform) {
+  return platform !== "win32";
+}
+
+export function getTempWavPath() {
+  return path.join(os.tmpdir(), "opencode-stt.wav");
+}
+
+const WAV_FILE = getTempWavPath();
 
 const MODELS_DIRS = [
   path.join(os.homedir(), ".local", "share", "whisper-cpp"),
@@ -80,7 +98,7 @@ function getModelsDir() {
   return MODELS_DIRS[0];
 }
 
-function listInputDevices() {
+function listMacInputDevices() {
   try {
     const json = execSync("system_profiler SPAudioDataType -json 2>/dev/null", {
       encoding: "utf-8",
@@ -93,6 +111,29 @@ function listInputDevices() {
   } catch {
     return [];
   }
+}
+
+function listWindowsInputDevices() {
+  try {
+    const out = execSync(
+      'powershell -NoProfile -Command "Get-PnpDevice -Class AudioEndpoint -Status OK | ' +
+        "Where-Object { $_.FriendlyName -match 'Microphone|Микрофон|Input' } | " +
+        'Select-Object -ExpandProperty FriendlyName"',
+      { encoding: "utf-8", timeout: 8000 },
+    );
+    return out
+      .split(/\r?\n/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+function listInputDevices(platform = process.platform) {
+  if (platform === "win32") return listWindowsInputDevices();
+  if (platform === "darwin") return listMacInputDevices();
+  return [];
 }
 
 // ---- Recording state and control ----
@@ -110,9 +151,11 @@ function forceKillSox(logger) {
     } catch {}
     soxProc = null;
   }
-  try {
-    execSync("pkill -9 -f 'sox.*opencode-stt'", { stdio: "ignore" });
-  } catch {}
+  if (shouldUsePkill(process.platform)) {
+    try {
+      execSync("pkill -9 -f 'sox.*opencode-stt'", { stdio: "ignore" });
+    } catch {}
+  }
 }
 
 function startRecording(kv, toast, logger) {
@@ -128,7 +171,7 @@ function startRecording(kv, toast, logger) {
 
   soxStderr = "";
   const mic = kv.get("stt.mic", "") || null;
-  const inputArgs = mic ? ["-t", "coreaudio", mic] : ["-d"];
+  const inputArgs = soxInputArgs(mic, process.platform);
   logger?.log("STT", `Starting recording mic=${mic || "system default"}`, "debug");
 
   soxProc = spawn(
