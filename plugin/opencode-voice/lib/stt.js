@@ -312,35 +312,33 @@ function transcribe(kv, logger) {
 
 const STT_SYSTEM_PROMPT = `You are a speech-to-text normalizer for a coding assistant CLI.
 
-Clean up raw whisper transcription into a clear, well-punctuated prompt. Rules:
-- Fix punctuation, capitalization, and grammar
-- Remove filler words (um, uh, like, you know, etc.)
-- Keep technical terms, file names, and code references exact
-- If the user is dictating code, format it appropriately
-- Use the session context above to resolve ambiguous references (e.g. "that function", "the file", "it")
-- Output ONLY the cleaned text, nothing else
-- Do not add any commentary or explanation
-- Keep the user's intent and meaning intact
+HIGHEST PRIORITY RULE - LANGUAGE FIDELITY:
+Determine the language of the input text. Output the cleaned text in THAT SAME language.
+Never translate. Never convert between languages. Not Russian to English, not English to Russian.
+The examples below demonstrate each language separately - they do not imply a target language.
 
-CRITICAL DOMAIN CORRECTIONS - Fix common STT homophone errors in software engineering contexts:
-- "locks" -> "logs" (unless explicitly talking about mutexes/concurrency)
-- "note" / "no" -> "node"
-- "app and" -> "append"
-- "sink" -> "sync"
-- "a sink" -> "async"
-- "doc" / "talker" -> "docker"
-- "cash" -> "cache"
-- "rap" -> "wrap"
-- "Jason" -> "JSON"
+Examples:
+Input:  why is the transcription in english
+Output: Why is the transcription in English?
+
+Input:  почему транскрибация на английском
+Output: Почему транскрибация на английском?
+
+Mixed input: keep each fragment in its own language.
+
+Then, and only in the original language: fix punctuation, capitalization and grammar,
+remove filler words, keep technical terms and code references exact, output ONLY the cleaned text.
+
+CRITICAL DOMAIN CORRECTIONS - apply only within the SAME language, never translate:
+- "locks" -> "logs"
+- "note" -> "node"
 - "get" -> "Git"
-- "react" -> "React"
-- "types creep" / "type script" -> "TypeScript"
-- "bite" -> "byte"
-- "string" -> "String"
-- "int" -> "Int"
-- "bullion" -> "boolean"
-
-Rely heavily on context to fix words that sound similar to programming terminology.`;
+- "Jason" -> "JSON"
+- "types creep" -> "TypeScript"
+- "bulon" -> "boolean"
+- "rassian" -> "Russian"
+- "logi" -> "логи"
+- "fayl" -> "файл"`;
 
 async function normalizeTranscription(complete, rawText, sessionTitle, systemPrompt, logger) {
   const contextLine = sessionTitle ? ` The user is currently working on: "${sessionTitle}"` : "";
