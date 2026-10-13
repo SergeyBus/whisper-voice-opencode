@@ -1,0 +1,15 @@
+{
+  "$schema": "https://opencode.ai/tui.json",
+  "keybinds": { "session_rename": "none" },
+  "plugin": [
+    [
+      "<REPO>/plugin/opencode-voice",
+      {
+        "endpoint": "https://opencode.ai/inference/v1",
+        "model": "big-pickle",
+        "apiKeyEnv": "OPENCODE_API_KEY",
+        "sttLanguage": "auto"
+      }
+    ]
+  ]
+}
