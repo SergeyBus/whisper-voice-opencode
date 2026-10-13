@@ -1,22 +1,21 @@
 {
-  "name": "@renjfk/opencode-voice",
-  "version": "0.6.0",
-  "description": "Speech-to-text and text-to-speech for OpenCode. Record voice prompts with whisper-cpp, hear responses via Piper TTS, with LLM normalization through any OpenAI-compatible endpoint.",
+  "name": "whisper-voice-opencode",
+  "version": "1.0.0",
+  "description": "Speech-to-text voice input for OpenCode via local whisper.cpp, with optional LLM normalization (OpenCode Zen or local Ollama/LM Studio). macOS and Windows.",
   "keywords": [
     "opencode",
-    "piper",
     "plugin",
     "speech-to-text",
     "stt",
-    "text-to-speech",
-    "tts",
     "voice",
-    "whisper"
+    "whisper",
+    "whisper.cpp",
+    "russian"
   ],
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/renjfk/opencode-voice.git"
+    "url": "git+https://github.com/SergeyBus/whisper-voice-opencode.git"
   },
   "files": [
     "index.js",
@@ -37,8 +36,7 @@
     "fmt": "npx oxfmt --check .",
     "fmt:fix": "npx oxfmt --write .",
     "test": "node --test",
-    "check": "npm run lint && npm run fmt",
-    "prepack": "npm run check"
+    "check": "npm run lint && npm run fmt"
   },
   "devDependencies": {
     "oxfmt": "0.50.0",
