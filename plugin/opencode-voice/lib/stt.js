@@ -21,7 +21,7 @@ export function soxInputArgs(mic, platform) {
   return mic ? ["-t", audioDriver(platform), mic] : ["-d"];
 }
 
-export function shouldUsePkill(platform) {
+export function shouldUseStaleRecorderGuard(platform) {
   return platform !== "win32";
 }
 
@@ -151,9 +151,22 @@ function forceKillSox(logger) {
     } catch {}
     soxProc = null;
   }
-  if (shouldUsePkill(process.platform)) {
+  if (shouldUseStaleRecorderGuard(process.platform)) {
+    // Зависший процесс записи с прошлой сессии: находим держателя WAV-файла
+    // (lsof) и завершаем только его, вместо подбора процессов по шаблону имени.
     try {
-      execSync("pkill -9 -f 'sox.*opencode-stt'", { stdio: "ignore" });
+      const out = execSync(`lsof -t ${JSON.stringify(WAV_FILE)} 2>/dev/null || true`, {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "ignore"],
+      });
+      for (const pid of String(out).split(/\s+/).filter(Boolean)) {
+        const n = Number(pid);
+        if (!Number.isInteger(n) || n === process.pid) continue;
+        try {
+          process.kill(n, "SIGKILL");
+          logger?.log("STT", `Killed stale recorder pid=${n}`, "debug");
+        } catch {}
+      }
     } catch {}
   }
 }

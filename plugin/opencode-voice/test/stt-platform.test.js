@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import os from "node:os";
 import path from "node:path";
-import { audioDriver, soxInputArgs, shouldUsePkill, getTempWavPath } from "../lib/stt.js";
+import { audioDriver, soxInputArgs, shouldUseStaleRecorderGuard, getTempWavPath } from "../lib/stt.js";
 
 test("audioDriver maps platforms", () => {
   assert.equal(audioDriver("darwin"), "coreaudio");
@@ -24,10 +24,10 @@ test("soxInputArgs without mic uses default device", () => {
   assert.deepEqual(soxInputArgs(null, "darwin"), ["-d"]);
 });
 
-test("shouldUsePkill only on non-windows", () => {
-  assert.equal(shouldUsePkill("darwin"), true);
-  assert.equal(shouldUsePkill("linux"), true);
-  assert.equal(shouldUsePkill("win32"), false);
+test("shouldUseStaleRecorderGuard only on non-windows", () => {
+  assert.equal(shouldUseStaleRecorderGuard("darwin"), true);
+  assert.equal(shouldUseStaleRecorderGuard("linux"), true);
+  assert.equal(shouldUseStaleRecorderGuard("win32"), false);
 });
 
 test("getTempWavPath lives in os tmpdir", () => {
